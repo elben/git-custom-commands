@@ -1,0 +1,6 @@
+#!/bin/sh
+
+# date -v-10d gets 10 days prior
+# echo "$@" prints out rest of argument into git-last-week into the line, so
+# that you can do: git last-week -p
+git log --pretty=format:"[%h] [%ad] %s %b" --date=short --since=`date -v-10d "+%Y-%m-%d"` --author="`git config user.name`" `echo "$@"`
