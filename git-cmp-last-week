@@ -1,0 +1,37 @@
+#!/bin/sh
+
+days=10
+
+while getopts d: opt
+do
+    case "$opt" in
+    d)  days="$OPTARG";; # changing number of days
+    \?) echo "$OPTARG is an unknown option"
+        exit 1;; # all other options
+    esac
+done
+
+shift $((OPTIND-1))
+
+echo "Looking $days days past."
+
+# Grab SHA from 10 days ago.
+old_sha=$(git log --pretty=format:"%H" --date=short --since=`date -v-${days}d "+%Y-%m-%d"` | tail -n1)
+
+guessed_branch=$(git branch | grep '* ' | awk '{print $2}')
+current_branch=${1:-"$guessed_branch"}
+repo_path=$(git config -l | grep 'remote.origin.url' | awk 'BEGIN { FS=":" } ;
+{print $2}' | sed -e "s/\(.*\).git$/\1/")
+user=$(echo $repo_path | awk 'BEGIN { FS="/" } ; { print $1 }')
+repo=$(echo $repo_path | awk 'BEGIN { FS="/" } ; { print $2 }')
+
+url="https://github.com/$user/$repo/compare/$old_sha...master#files_bucket"
+
+cat - <<COPY_TEXT | pbcopy
+BRANCH: *${current_branch}*
+
+$url
+COPY_TEXT
+
+open $url
+
